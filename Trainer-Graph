@@ -1,0 +1,212 @@
+1. Problem Statement
+Trainer recruitment process is going on for the Software Engineering post-graduation programme at BITS Pilani University. The requirement is to hire the minimum number of trainers who can handle the maximum number of topics that are part of the curriculum in the post-graduation programme. Let us assume that a trainer can handle a maximum of 5 topics. The topics are listed below:
+1. Artificial Intelligence (AI)
+2. Machine Learning (ML)
+3. Database management (DBMS)
+4. Data Science (DS)
+5. Data Structures and Algorithm Design (DSAD)
+6. Computer Organisation (CO)
+7. Data Mining (DM)
+8. Mathematical Foundation for Data science (MDS)
+You are required to design a program that can help answer the below queries efficiently.
+1. Display the list of names of trainers and the unique list of topics handled by all of them.
+2. Calculate the least number of trainers to be recruited to handle all the subjects.
+3. Find the list of trainers who can handle a specific topic.
+4. If there is a requirement for a trainer who can handle any given topic, is there one single trainer who can do that? If yes, whom?
+
+import os
+
+class trainersNetwork:
+        def __init__(self):
+        
+            self.promptsPS13 = 'C:/Data/Code Samples/Python/MyPythonPrograms/BITS/DSAD/Assignment1/promptsPS13.txt'
+            self.outputPS13 = 'C:/Data/Code Samples/Python/MyPythonPrograms/BITS/DSAD/Assignment1/outputPS13.txt'               
+
+                
+            self.uniqeTrainers = []
+            self.uniqeSubjects = []                
+            self.trainerSubjects = []
+            self.graphEdges = []
+            self.inputLines = []
+            self.possibleRowCombinations = []     
+        
+
+        """
+        Delete output file.
+        """
+        def DeleteOutputFile(self):
+            if os.path.exists(self.outputPS13):
+                os.remove(self.outputPS13)
+
+
+        """
+        This method create a unique list of subjects that the college would have on the whole
+        """
+        def Create_Uniqe_List_of_Subjects(self):
+            first_list = []
+            self.uniqeSubjects = list(first_list)
+            for t in self.trainerSubjects:
+                self.uniqeSubjects.extend(x for x in t[1] if x not in self.uniqeSubjects)
+
+            self.uniqeSubjects = sorted(self.uniqeSubjects)
+
+        
+        """
+        This method create a unique list of trainers
+        """
+        def Create_Uniqe_List_of_Trainers(self):
+            for t in self.trainerSubjects:
+                self.uniqeTrainers.append(t[0])
+            self.uniqeTrainers = sorted(list(set(self.uniqeTrainers)))
+
+        
+        """
+        This method would create a graph using adjacency matrix
+        """
+        def CreateGraph(self):
+            self.graphEdges = [[0 for j in range(len(self.uniqeSubjects))] for i in range(len(self.uniqeTrainers))]
+
+            for i in range(len(self.uniqeTrainers)):
+                for j in range(len(self.uniqeSubjects)):
+                    if self.trainerSubjects[i][0] == self.uniqeTrainers[i] and self.uniqeSubjects[j] in self.trainerSubjects[i][1]:
+                        self.graphEdges[i][j] = 1
+       
+        """
+        This function reads the input file inputPS13.txt containing the name of the trainer and the subjects they can handle separated by a slash.
+        AI / DM / DS / MDS
+        The function should create relevant vertices for both the trainers and the subjects they know and relevant edges to indicate the connection between the trainer and the subjects they teach. 
+        Ensure that the vertices are unique and there are no duplicates.
+        """
+        def readInput(self, input_file):
+            try:
+                with open(input_file, 'r') as f:
+                    self.inputLines = f.read().splitlines()
+
+                for line in self.inputLines:
+                    line_data = line.split('/')
+                    self.trainerSubjects.append((line_data[0], line_data[1:]))
+
+                self.trainerSubjects = sorted(self.trainerSubjects)
+
+                self.Create_Uniqe_List_of_Subjects()
+                self.Create_Uniqe_List_of_Trainers()
+                self.CreateGraph()
+
+                self.showAll()
+
+            except Exception as e:
+                print("Error" + e.__str__())
+
+        """
+        This function displays the total number (count) of unique trainers and subjects that have been fed into the system.
+        It should also list out the trainer names and unique list of subjects stored.
+        
+        The output of this function pushed into outputPS13.txt file. 
+        """
+        def showAll(self):
+            try:
+                with open(self.outputPS13, 'a') as f:
+                    f.write('\n----------Function showAll--------------\n')
+                    f.write('Total no. of trainers: ' + str(len(self.uniqeTrainers)) + '\n')
+                    f.write('Total no. of subjects: ' + str(len(self.uniqeSubjects)) + '\n')
+
+                    f.write('\nList of trainers:\n')
+                    for trainer in self.uniqeTrainers:
+                        f.write(trainer + '\n')
+
+                    f.write('\nList of subjects:\n')
+                    for subject in self.uniqeSubjects:
+                        f.write(subject + '\n')
+
+                    f.write('\n------------------------\n')
+
+                self.displayRecruitList()
+            except Exception as e:
+                print("Error:" + e.__str__())
+
+        """
+        This function displays the minimum number of trainers that need to be hired to cover all the subjects that are fed into the system.
+        The function also displays the names of the trainers and the subjects they teach individually to the outputPS13.txt file.
+        The function is triggered when the following tag is found in the file promptsPS13.txt file.
+
+        The output of this function appended into outputPS13.txt file
+        """
+        def displayRecruitList(self):
+            string1 = "showMinList"
+            try:
+                with open(self.promptsPS13) as f:
+                    readfile = f.read()
+                if string1 in readfile:
+                    col_sum = []
+                    row_sum = []
+                    pos_list = []
+                    temp_list = self.graphEdges.copy()
+                    for j in range(0, len(self.uniqeSubjects)):
+                        x = 0
+                        for i in range(0, len(self.uniqeTrainers)):
+                            x = x + self.graphEdges[i][j]
+                        col_sum.append(x)
+                        for i in range(0, len(self.uniqeTrainers)):
+                            temp_list[i][j] = self.graphEdges[i][j] / col_sum[j]
+                    for i in temp_list:
+                        row_sum.append(sum(i))
+                    for j in range(0, len(self.uniqeSubjects)):
+                        sub_list = []
+                        for i in range(0, len(self.uniqeTrainers)):
+                            sub_list.append(temp_list[i][j])
+                        unique_val = list(set(sub_list))
+                        unique_val_2 = [x for x in unique_val if x != 0][0]
+                        indices = [i for i, x in enumerate(sub_list) if x == unique_val_2]
+                        row_vals = [row_sum[n] for n in indices]
+                        pos_list.append(row_sum.index(max(row_vals)))
+                    train_req = list(set(pos_list))
+                    self.inputLines.sort()
+                    recruit_list = [self.inputLines[n] for n in train_req]
+
+                    with open(self.outputPS13, 'a') as f:
+                        f.write('\n----------Function displayRecruitList--------------\n')
+                        f.write('No of trainers required to cover all subjects: '
+                                + str(len(train_req)) + '\n')
+                        for x in recruit_list:
+                            f.write(str(x) + '\n')
+
+                self.displayTrainers()
+            except Exception as e:
+                print("Error:" + e.__str__())
+
+
+        """
+        This function displays all the trainers who can teach a particular subject. The function reads the input subject from the file promptsPS13.txt.
+        The output of this function appended into outputPS13.txt file.
+        """
+        def displayTrainers(self):
+            try:
+                with open(self.promptsPS13) as f:
+                    for prompt in f.read().splitlines():
+                        trainers = []
+                        if len(prompt.split(':')) > 1:
+                            for i in range(len(self.trainerSubjects)):
+                                if prompt.split(':')[1].strip() in self.trainerSubjects[i][1]:
+                                    trainers.append(self.trainerSubjects[i][0])
+
+                            trainers = list(set(trainers))
+                            with open(self.outputPS13, 'a') as f:
+                                f.write('\n----------Function displayTrainers--------------\n')
+                                f.write('\nList of Trainers who can teach ' + prompt.split(':')[1].strip() + '\n')
+                                for trainer in trainers:
+                                    f.write(trainer + '\n')
+                                f.write('\n------------------------\n')
+
+            except Exception as e:
+                print("Error:" + e.__str__())
+
+"""
+Driver function to generate output
+"""
+def ExecuteTrainerNetwork():
+    trainers_Network = trainersNetwork()
+    trainers_Network.DeleteOutputFile()
+    trainers_Network.readInput('C:/Data/Code Samples/Python/MyPythonPrograms/BITS/DSAD/Assignment1/inputPS13.txt')
+
+
+ExecuteTrainerNetwork()
